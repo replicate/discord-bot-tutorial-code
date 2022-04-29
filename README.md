@@ -12,6 +12,3 @@ You'll also need an API key from Replicate.
 Then, run the bot like this:
 
     poetry run python bot.py
-
-TODO: Document how to set up Discord app
-
