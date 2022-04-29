@@ -1,46 +1,71 @@
 import asyncio
+from dotenv import load_dotenv
 import httpx
 import interactions
 import os
 
+# When Poetry 1.2 is released, could use this: https://github.com/mpeteuil/poetry-dotenv-plugin
+load_dotenv()
 REPLICATE_API_TOKEN = os.environ["REPLICATE_API_TOKEN"]
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
+DISCORD_SCOPE = os.environ.get("DISCORD_SCOPE")
+if DISCORD_SCOPE:
+    DISCORD_SCOPE = int(DISCORD_SCOPE)
 
 bot = interactions.Client(token=DISCORD_TOKEN)
+headers = {"Authorization": f"Token {REPLICATE_API_TOKEN}"}
 
 
 @bot.command(
-    name="replicate", description="Run a model on Replicate.", scope=968264728080162857
+    name="pixray",
+    description="Run pixray.",
+    scope=DISCORD_SCOPE,
+    options=[
+        interactions.Option(
+            name="prompt",
+            description="text prompt",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ],
 )
-async def my_first_command(ctx: interactions.CommandContext):
+async def pixray(ctx: interactions.CommandContext, prompt: str):
     msg = await ctx.send("Starting...")
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            "https://api.replicate.com/v1/models/pixray/text2image/versions/f6ca4f09e1cad8c4adca2c86fd1f4c9121f5f2e6c2f00408ab19c4077192fd23/predictions",
-            json={"input": {"prompts": "hello world"}},
-            headers={"Authorization": f"Token {REPLICATE_API_TOKEN}"},
+            "https://api.replicate.com/v1/models/pixray/text2image/predictions",
+            json={"input": {"prompts": prompt}},
+            headers=headers,
         )
+        if resp.status_code != 201:
+            await msg.edit(content=f"Error: {resp.status_code}")
+            return
         prediction_id = resp.json()["id"]
+        prediction_url = resp.json()["urls"]["get"]
 
         while True:
             print("poll...")
-            output_filename = None
+            output_url = None
             resp = await client.get(
-                f"https://api.replicate.com/v1/models/pixray/text2image/versions/f6ca4f09e1cad8c4adca2c86fd1f4c9121f5f2e6c2f00408ab19c4077192fd23/predictions/{prediction_id}",
-                headers={"Authorization": f"Token {REPLICATE_API_TOKEN}"},
+                f"https://api.replicate.com" + prediction_url,
+                headers=headers,
             )
+            if resp.status_code != 200:
+                await msg.edit(content=f"Error: {resp.status_code}. Retrying...")
+                await asyncio.sleep(1.0)
+                continue
 
             prediction = resp.json()
             print(prediction)
 
             if prediction["output"]:
-                if prediction["output"][-1] != output_filename:
-                    output_filename = prediction["output"][-1]
+                if prediction["output"][-1] != output_url:
+                    output_url = prediction["output"][-1]
                     with open("out.png", "wb") as f:
                         async with client.stream(
                             "GET",
-                            f"https://replicate.com/api/models/pixray/text2image/files/{output_filename}",
-                            headers={"Authorization": f"Token {REPLICATE_API_TOKEN}"},
+                            output_url,
+                            headers=headers,
                         ) as response:
                             async for chunk in response.aiter_bytes():
                                 f.write(chunk)
