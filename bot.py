@@ -33,8 +33,11 @@ async def pixray(ctx: interactions.CommandContext, prompt: str):
     msg = await ctx.send("Starting...")
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            "https://api.replicate.com/v1/models/pixray/text2image/predictions",
-            json={"input": {"prompts": prompt}},
+            "https://api.replicate.com/v1/predictions",
+            json={
+                "version": "f6ca4f09e1cad8c4adca2c86fd1f4c9121f5f2e6c2f00408ab19c4077192fd23",
+                "input": {"prompts": prompt},
+            },
             headers=headers,
         )
         if resp.status_code != 201:
@@ -47,7 +50,7 @@ async def pixray(ctx: interactions.CommandContext, prompt: str):
             print("poll...")
             output_url = None
             resp = await client.get(
-                f"https://api.replicate.com" + prediction_url,
+                prediction_url,
                 headers=headers,
             )
             if resp.status_code != 200:
