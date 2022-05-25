@@ -1,6 +1,6 @@
-# Replicate Discord command
+# Replicate Discord bot
 
-[Follow the instructions here to create an application in Discord.](https://discord-py-slash-command.readthedocs.io/en/latest/quickstart.html) You'll want to give it permissions to create messages.
+[Follow the instructions here to create an application in Discord.](https://discordpy.readthedocs.io/en/stable/discord.html) You'll want to give it permissions to create messages.
 
 Add your Discord app token and Replicate API key to `.env`:
 

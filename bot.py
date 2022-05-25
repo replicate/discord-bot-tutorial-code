@@ -1,36 +1,31 @@
 import os
 
-import async_wrap_iter
-import interactions
+from discord.ext import commands
 import replicate
 from dotenv import load_dotenv
 from async_wrap_iter import async_wrap_iter
 
 # When Poetry 1.2 is released, could use this: https://github.com/mpeteuil/poetry-dotenv-plugin
 load_dotenv()
-DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
-DISCORD_SCOPE = os.environ.get("DISCORD_SCOPE")
-if DISCORD_SCOPE:
-    DISCORD_SCOPE = int(DISCORD_SCOPE)
 
-bot = interactions.Client(token=DISCORD_TOKEN)
-
-
-@bot.command(
-    name="pixray",
-    description="Run pixray.",
-    scope=DISCORD_SCOPE,
-    options=[
-        interactions.Option(
-            name="prompt",
-            description="text prompt",
-            type=interactions.OptionType.STRING,
-            required=True,
-        ),
-    ],
+bot = commands.Bot(
+    command_prefix="!",
+    description="Runs models on Replicate! https://github.com/replicate/replicate-discord-bot",
 )
-async def pixray(ctx: interactions.CommandContext, prompt: str):
-    msg = await ctx.send("Starting...")
+
+
+@bot.event
+async def on_ready():
+    print("Logged in as")
+    print(bot.user.name)
+    print(bot.user.id)
+    print("------")
+
+
+@bot.command()
+async def pixray(ctx, *, prompt):
+    """Run pixray/text2image"""
+    msg = await ctx.send(f"“{prompt}”\n> Starting...")
 
     model = replicate.models.get("pixray/text2image")
 
@@ -39,9 +34,7 @@ async def pixray(ctx: interactions.CommandContext, prompt: str):
     iterator = async_wrap_iter(iterator)
 
     async for image in iterator:
-        msg._client = bot._http  # HACK: why??
-        await msg.edit(image)
+        await msg.edit(content=f"“{prompt}”\n{image}")
 
 
-print("starting bot...")
-bot.start()
+bot.run(os.environ["DISCORD_TOKEN"])
