@@ -1,19 +1,19 @@
-import asyncio
-from dotenv import load_dotenv
-import httpx
-import interactions
 import os
+
+import async_wrap_iter
+import interactions
+import replicate
+from dotenv import load_dotenv
+from async_wrap_iter import async_wrap_iter
 
 # When Poetry 1.2 is released, could use this: https://github.com/mpeteuil/poetry-dotenv-plugin
 load_dotenv()
-REPLICATE_API_TOKEN = os.environ["REPLICATE_API_TOKEN"]
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 DISCORD_SCOPE = os.environ.get("DISCORD_SCOPE")
 if DISCORD_SCOPE:
     DISCORD_SCOPE = int(DISCORD_SCOPE)
 
 bot = interactions.Client(token=DISCORD_TOKEN)
-headers = {"Authorization": f"Token {REPLICATE_API_TOKEN}"}
 
 
 @bot.command(
@@ -31,60 +31,17 @@ headers = {"Authorization": f"Token {REPLICATE_API_TOKEN}"}
 )
 async def pixray(ctx: interactions.CommandContext, prompt: str):
     msg = await ctx.send("Starting...")
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            "https://api.replicate.com/v1/predictions",
-            json={
-                "version": "f6ca4f09e1cad8c4adca2c86fd1f4c9121f5f2e6c2f00408ab19c4077192fd23",
-                "input": {"prompts": prompt},
-            },
-            headers=headers,
-        )
-        if resp.status_code != 201:
-            await msg.edit(content=f"Error: {resp.status_code}")
-            return
-        prediction_id = resp.json()["id"]
-        prediction_url = resp.json()["urls"]["get"]
 
-        while True:
-            print("poll...")
-            output_url = None
-            resp = await client.get(
-                prediction_url,
-                headers=headers,
-            )
-            if resp.status_code != 200:
-                await msg.edit(content=f"Error: {resp.status_code}. Retrying...")
-                await asyncio.sleep(1.0)
-                continue
+    model = replicate.models.get("pixray/text2image")
 
-            prediction = resp.json()
-            print(prediction)
+    iterator = model.predict(prompts=prompt)
+    # wrap in async iterator so it works with discord-py's async/await
+    iterator = async_wrap_iter(iterator)
 
-            if prediction["output"]:
-                if prediction["output"][-1] != output_url:
-                    output_url = prediction["output"][-1]
-                    with open("out.png", "wb") as f:
-                        async with client.stream(
-                            "GET",
-                            output_url,
-                            headers=headers,
-                        ) as response:
-                            async for chunk in response.aiter_bytes():
-                                f.write(chunk)
-                    msg._client = bot._http  # HACK: why??
-                    msg = await msg.edit(
-                        content="", files=[interactions.File(filename="out.png")]
-                    )
-            else:
-                msg._client = bot._http  # HACK: why??
-                msg = await msg.edit(prediction["status"])
-
-            if prediction["status"] in ["succeeded", "failed"]:
-                break
-
-            await asyncio.sleep(1.0)
+    async for image in iterator:
+        msg._client = bot._http  # HACK: why??
+        await msg.edit(image)
 
 
-print("starting...")
+print("starting bot...")
 bot.start()
