@@ -1,5 +1,7 @@
 # Replicate Discord bot
 
+A Discord bot that runs things on Replicate. Try it out in #art on the Replicate Discord server: https://discord.gg/replicate
+
 [Follow the instructions here to create an application in Discord.](https://discordpy.readthedocs.io/en/stable/discord.html) You'll want to give it permissions to create messages.
 
 Add your Discord app token and Replicate API key to `.env`:
@@ -17,7 +19,7 @@ Then, run the bot like this:
 
 You can use Fly to deploy the bot to the cloud.
 
-[Follow this guide.](https://fly.io/docs/speedrun/). In short, you'll need to run:
+[Follow this guide.](https://fly.io/docs/speedrun/) In short, you'll need to run:
 
     flyctl launch
     flyctl deploy
