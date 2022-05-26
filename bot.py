@@ -1,25 +1,16 @@
-import os
-
-from discord.ext import commands
-import replicate
-from dotenv import load_dotenv
 from async_wrap_iter import async_wrap_iter
+from discord.ext import commands
+from dotenv import load_dotenv
+import os
+import replicate
 
-# When Poetry 1.2 is released, could use this: https://github.com/mpeteuil/poetry-dotenv-plugin
+
 load_dotenv()
 
 bot = commands.Bot(
     command_prefix="!",
     description="Runs models on Replicate! https://github.com/replicate/replicate-discord-bot",
 )
-
-
-@bot.event
-async def on_ready():
-    print("Logged in as")
-    print(bot.user.name)
-    print(bot.user.id)
-    print("------")
 
 
 @bot.command()
@@ -29,11 +20,8 @@ async def pixray(ctx, *, prompt):
 
     model = replicate.models.get("pixray/text2image")
 
-    iterator = model.predict(prompts=prompt)
-    # wrap in async iterator so it works with discord-py's async/await
-    iterator = async_wrap_iter(iterator)
-
-    async for image in iterator:
+    # wrap in async_wrap_iter() so it works with discord-py's async/await
+    async for image in async_wrap_iter(model.predict(prompts=prompt)):
         await msg.edit(content=f"“{prompt}”\n{image}")
 
 
