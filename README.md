@@ -12,3 +12,13 @@ You'll also need an API key from Replicate.
 Then, run the bot like this:
 
     poetry run python bot.py
+
+## Deploy
+
+You can use Fly to deploy the bot to the cloud.
+
+[Follow this guide.](https://fly.io/docs/speedrun/). In short, you'll need to run:
+
+    flyctl launch
+    flyctl deploy
+    flyctl secrets set REPLICATE_API_TOKEN=... DISCORD_TOKEN=...
