@@ -1,4 +1,3 @@
-from async_wrap_iter import async_wrap_iter
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
