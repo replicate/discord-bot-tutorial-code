@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "replicate-discord-bot"
+name = "stable-diffusion-bot"
 version = "0.1.0"
 description = ""
-authors = ["Ben Firshman <ben@firshman.co.uk>"]
+authors = ["Ben Firshman <ben@firshman.co.uk>", "Dominic Baggot <dom@replicate.com>", "Zeke Sikelianos <zeke@replicate.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
