@@ -1,27 +1,30 @@
+from discord import Intents
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
 import replicate
 
-
 load_dotenv()
+
+intents = Intents.default()
+intents.message_content = True
 
 bot = commands.Bot(
     command_prefix="!",
-    description="Runs models on Replicate! https://github.com/replicate/replicate-discord-bot",
+    description="Runs models on Replicate!",
+    intents=intents,
 )
 
 
 @bot.command()
-async def pixray(ctx, *, prompt):
-    """Run pixray/text2image"""
-    msg = await ctx.send(f"“{prompt}”\n> Starting...")
+async def dream(ctx, *, prompt):
+    """Generate an image from a text prompt using the stable-diffusion model"""
+    msg = await ctx.send(f"“{prompt}”\n> Generating...")
 
-    model = replicate.models.get("pixray/text2image")
+    model = replicate.models.get("stability-ai/stable-diffusion")
+    image = model.predict(prompt=prompt)[0]
 
-    # wrap in async_wrap_iter() so it works with discord-py's async/await
-    async for image in async_wrap_iter(model.predict(prompts=prompt)):
-        await msg.edit(content=f"“{prompt}”\n{image}")
+    await msg.edit(content=f"“{prompt}”\n{image}")
 
 
 bot.run(os.environ["DISCORD_TOKEN"])
