@@ -29,6 +29,7 @@ async def dream(ctx, *, prompt):
         else: # something else went wrong, log to console so developer can debug
             print(ex)
             await msg.edit(content="> Error. Please try again.")
+        return # return early upon failure
     await msg.edit(content=f"“{prompt}”\n{image}")
 
 
