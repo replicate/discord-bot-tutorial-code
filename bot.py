@@ -13,6 +13,7 @@ bot = commands.Bot(
     command_prefix="!",
     description="Runs models on Replicate!",
     intents=intents,
+    proxy=os.environ["PROXY"] if "PROXY" in os.environ else None,
 )
 
 
@@ -21,7 +22,7 @@ async def dream(ctx, *, prompt):
     """Generate an image from a text prompt using the stable-diffusion model"""
     msg = await ctx.send(f"“{prompt}”\n> Generating...")
 
-    model = replicate.models.get("stability-ai/stable-diffusion")
+    model = replicate.models.get(os.environ["REPLICATE_MODEL"])
     image = model.predict(prompt=prompt)[0]
 
     await msg.edit(content=f"“{prompt}”\n{image}")
